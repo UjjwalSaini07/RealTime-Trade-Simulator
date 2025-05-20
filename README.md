@@ -143,12 +143,18 @@ python -m streamlit run main.py
 | 🔐 User Authentication | Add secure login with role-based access (e.g., admin vs. analyst) using OAuth2 or Firebase. |
 | 🧪 CI/CD & Dockerization | Containerize the entire system and set up CI/CD pipelines with GitHub Actions and Docker Compose. |
 
-## Screenshots 📷
+## Contact 📞
+Feel free to reach out if you have any questions or suggestions!
 
-
-## Author ✍️
-- Name: [UjjwalSaini07](https://github.com/UjjwalSaini07)
 - Email: [Mail](ujjwalsaini0007@gmail.com)
+- Github: [@Ujjwal Saini](https://github.com/UjjwalSaini07)
+
+## Screenshots 📷
+### Trading Dashboard
+![image](https://github.com/user-attachments/assets/94c961c9-6d48-4d72-823c-255d746def22)
+
+### Terminal Data Retrieval
+![image](https://github.com/user-attachments/assets/f33ea2fd-dde1-4486-a90a-6c429bcd0c75)
 
 <div align="center">
     <a href="#top">
