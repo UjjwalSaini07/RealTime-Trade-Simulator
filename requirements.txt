@@ -6,3 +6,4 @@ scikit-learn
 matplotlib
 asyncio
 loguru
+python-dotenv
