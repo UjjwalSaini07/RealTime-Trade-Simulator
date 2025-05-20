@@ -3,7 +3,7 @@
 A Streamlit-based real-time trading dashboard for analyzing the OKX spot orderbook, simulating execution strategies, tracking latency, visualizing price spreads, and modeling slippage and market impact, it connects to the OKX WebSocket API to stream live order book data for selected spot assets. It provides real-time visualization of market depth metrics such as best bid/ask, spread, mid-price, volumes, latency monitoring, health status, and simulates basic order execution scenarios.
 **The goal** is to enable traders and analysts to monitor market liquidity and simulate order executions interactively in a clean, easy-to-use web interface.
 
-## 🚀 Features
+## Features 🚀
 
 - 📡 Real-time WebSocket order book data from OKX WebSocket API (books5 channel)
 - 📊 Mid-price & spread time series visualization
@@ -19,7 +19,7 @@ A Streamlit-based real-time trading dashboard for analyzing the OKX spot orderbo
 - 💾 CSV export of historical order book data
 - 📎 Modular architecture: `models/`, `utils/`, `ws_client.py`
 
-## 🗂️ Project Structure
+## Project Structure 🗂️ 
 
 ```bash
 okx_assignment/
@@ -57,3 +57,107 @@ okx_assignment/
 - **_requirements.txt_** : Lists all Python dependencies required to install and run the application.
 - **_test_ws.py_** : Standalone test script to validate WebSocket connectivity and data integrity.
 - **_README.md_** : Documentation file providing an overview, setup instructions, and project structure.
+
+## Installation 🛠️
+1. Navigate to the project Root directory:
+```bash
+cd okx_assignment
+```
+2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+3. Create a .env file in the root directory
+```bash
+API_URL=wss://ws.okx.com:8443/ws/v5/public
+```
+
+# Usage 🖥️
+- Run the Streamlit app:
+```bash
+python -m streamlit run main.py
+```
+- The dashboard will open in your default browser: http://localhost:8501/
+
+## Dashboard Panels
+- **_Metrics_**: Shows current best bid/ask, spread, mid price, bid/ask volumes, latency, and health status.
+- **_Charts_**: Real-time line charts for mid price, spread, and latency over time.
+- **_Latency & Health Monitoring_**: Shows latency trends and health status based on latency thresholds.
+- **_Execution Simulation_**: Displays simulated execution results based on order type and market conditions.
+- **_Export Data_**: Button to download historical order book snapshots and metrics as CSV.
+
+## Model Documentation 🧠
+
+### 1. Slippage Model (`models/slippage_model.py`)
+- **Model Used**: Linear Regression  
+- **Purpose**: Estimate price deviation based on order size, volatility, and spread.  
+- **Features**:
+  - `order_size_usd`
+  - `market_volatility`
+  - `spread_percent`  
+- **Target**: `slippage_bps` (slippage in basis points)
+
+### 2. Market Impact Model (`models/market_impact.py`)
+- **Methodology**: Almgren–Chriss Framework  
+- **Assumptions**:
+  - Temporary and permanent impact modeled with linear coefficients  
+  - Market volume as liquidity proxy  
+- **Equation**:  
+  `impact = η * (Q / V) + λ * (Q / V)^2`  
+  Where:  
+  - `Q`: order size  
+  - `V`: market volume  
+  - `η`, `λ`: impact coefficients  
+
+### 3. Maker vs Taker Model (`models/maker_taker_model.py`)
+- **Model Used**: Logistic Regression  
+- **Purpose**: Predict execution likelihood for limit orders.  
+- **Features**:
+  - `spread`
+  - `volatility`
+  - `order_type`
+  - `relative_price_distance`
+
+## Utility Modules 🧰 
+
+#### 1. `utils/latency_tracker.py` : Measures roundtrip latency for WebSocket events and internal app cycles.
+#### 2. `utils/fee_model.py` : Supports tiered maker-taker fee structures (OKX Tier 1, 2, 3).
+#### 3. `utils/data_utils.py` : Converts OKX order book ticks into normalized pandas DataFrames.
+
+## Performance Optimization ⚙️
+
+- `@st.cache_resource` to avoid re-instantiating WebSocket clients  
+- `deque` with `maxlen` for lightweight time series  
+- DataFrames rebuilt only from live updates  
+- Streamlit container reuse to reduce render load
+
+
+## Future Enhancements 🧭
+
+| Feature | Description |
+|--------|-------------|
+| 🔌 FastAPI Backend | Refactor core logic into a FastAPI backend to support RESTful and WebSocket endpoints for scalable API-based integration. |
+| 📱 Mobile Dashboard | Build a responsive frontend using React Native or Flutter to access real-time analytics from mobile devices. |
+| 📦 Redis Caching Layer | Introduce Redis for efficient storage and retrieval of real-time market data and reduce load on WebSocket listeners. |
+| 📈 Historical Backtesting Engine | Implement a module for backtesting execution strategies using historical tick data. |
+| 🔐 User Authentication | Add secure login with role-based access (e.g., admin vs. analyst) using OAuth2 or Firebase. |
+| 🧪 CI/CD & Dockerization | Containerize the entire system and set up CI/CD pipelines with GitHub Actions and Docker Compose. |
+
+## Screenshots 📷
+
+
+## Author ✍️
+- Name: [UjjwalSaini07](https://github.com/UjjwalSaini07)
+- Email: [Mail](ujjwalsaini0007@gmail.com)
+
+<div align="center">
+    <a href="#top">
+        <img src="https://img.shields.io/badge/Back%20to%20Top-000000?style=for-the-badge&logo=github&logoColor=white" alt="Back to Top">
+    </a>
+</div>
+
+
+
+
+
+
