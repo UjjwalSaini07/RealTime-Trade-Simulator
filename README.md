@@ -89,6 +89,33 @@ python -m streamlit run main.py
 ```
 - The dashboard will open in your default browser: http://localhost:8501/
 
+## Project Setup Using Docker Containerization:
+1. Start the Docker Engine Locally or Use Any Service
+2. Navigate to the project Root directory:
+```bash
+    cd RealTime-Trade-Simulator
+```
+3. Run DockerFile:
+```bash
+    docker-compose up --build
+```
+4. Wait for Generating the Image
+##### How Docker Image Builds Looks
+
+  ![image](https://github.com/user-attachments/assets/313cbbc6-a55a-45a5-bcde-ecc218aa8080)
+<details>	
+ <summary><b>Docker Image Starts the Server Locally</b></summary><br>
+
+  ![image](https://github.com/user-attachments/assets/44e594fb-0200-47de-beff-0c627af5df5f)
+</details>
+<details>	
+ <summary><b>Project Docker Container</b></summary><br>
+
+  ![image](https://github.com/user-attachments/assets/79e7e298-1fe5-4509-ae7d-06e065e3c0e2)
+</details>
+
+5. Now Simply use the Project using Docker Container
+
 ## Dashboard Panels
 - **_Metrics_**: Shows current best bid/ask, spread, mid price, bid/ask volumes, latency, and health status.
 - **_Charts_**: Real-time line charts for mid price, spread, and latency over time.
@@ -98,35 +125,31 @@ python -m streamlit run main.py
 
 ## Model Documentation 🧠
 
-### 1. Slippage Model (`models/slippage_model.py`)
-- **Model Used**: Linear Regression  
-- **Purpose**: Estimate price deviation based on order size, volatility, and spread.  
-- **Features**:
-  - `order_size_usd`
-  - `market_volatility`
-  - `spread_percent`  
-- **Target**: `slippage_bps` (slippage in basis points)
+### 1. Slippage Model
+**Path**: `models/slippage_model.py`  
+- **Model**: Linear Regression  
+- **Purpose**: Estimate price deviation from order size, volatility, and spread.  
+- **Features**: `order_size_usd`, `market_volatility`, `spread_percent`  
+- **Target**: `slippage_bps`  
 
-### 2. Market Impact Model (`models/market_impact.py`)
-- **Methodology**: Almgren–Chriss Framework  
-- **Assumptions**:
-  - Temporary and permanent impact modeled with linear coefficients  
-  - Market volume as liquidity proxy  
+### 2. Market Impact Model
+**Path**: `models/market_impact.py`  
+- **Framework**: Almgren–Chriss  
+- **Assumptions**:  
+  - Linear coefficients for temporary and permanent impact  
+  - Liquidity proxy via market volume  
 - **Equation**:  
   `impact = η * (Q / V) + λ * (Q / V)^2`  
-  Where:  
   - `Q`: order size  
   - `V`: market volume  
   - `η`, `λ`: impact coefficients  
 
-### 3. Maker vs Taker Model (`models/maker_taker_model.py`)
-- **Model Used**: Logistic Regression  
-- **Purpose**: Predict execution likelihood for limit orders.  
-- **Features**:
-  - `spread`
-  - `volatility`
-  - `order_type`
-  - `relative_price_distance`
+### 3. Maker vs Taker Model
+**Path**: `models/maker_taker_model.py`  
+- **Model**: Logistic Regression  
+- **Purpose**: Predict limit order execution likelihood.  
+- **Features**: `spread`, `volatility`, `order_type`, `relative_price_distance`
+
 
 ## Utility Modules 🧰 
 
