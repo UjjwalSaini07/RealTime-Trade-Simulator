@@ -1,7 +1,11 @@
+import os
 import time
+from dotenv import load_dotenv
 from ws_client import OrderBookClient
 
-URL = "wss://ws.okx.com:8443/ws/v5/public"
+load_dotenv()
+
+URL = os.getenv("API_URL")
 
 def main():
     client = OrderBookClient(URL)
