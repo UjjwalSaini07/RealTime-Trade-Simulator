@@ -15,7 +15,7 @@ A Streamlit-based real-time trading dashboard for analyzing the OKX spot orderbo
 - ⚡ Latency & system health monitoring
 - 🎯 Market/Limit execution simulation with volatility
 - 🧠 Model-based slippage prediction & market impact estimation
-- 🗎 Interactive parameter inputs including symbol, order type, quantity, volatility estimate, fee tiers, and refresh rate
+- 🗎 Interactive parameter inputs- symbol, order type, quantity, volatility estimate, fee tiers, and refresh rate
 - 💾 CSV export of historical order book data
 - 📎 Modular architecture: `models/`, `utils/`, `ws_client.py`
 - 💻 Display of key metrics:
