@@ -1,5 +1,4 @@
-# 📈 OKX Real-Time Orderbook Analysis & Execution Simulator
-
+# 📈 RealTime Trade Simulator & Orderbook Analysis
 A Streamlit-based real-time trading dashboard for analyzing the OKX spot orderbook, simulating execution strategies, tracking latency, visualizing price spreads, and modeling slippage and market impact, it connects to the OKX WebSocket API to stream live order book data for selected spot assets. It provides real-time visualization of market depth metrics such as best bid/ask, spread, mid-price, volumes, latency monitoring, health status, and simulates basic order execution scenarios.
 **The goal** is to enable traders and analysts to monitor market liquidity and simulate order executions interactively in a clean, easy-to-use web interface.
 
