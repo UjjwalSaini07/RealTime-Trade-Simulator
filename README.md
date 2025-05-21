@@ -23,7 +23,7 @@ A Streamlit-based real-time trading dashboard for analyzing the OKX spot orderbo
 ```bash
 okx_assignment/
 │
-├── main.py                    # Streamlit app (UI + logic)
+├── main.py                   # Streamlit app (UI + logic)
 ├── ws_client.py              # WebSocket client for orderbook
 │
 ├── models/
@@ -58,7 +58,15 @@ okx_assignment/
 - **_README.md_** : Documentation file providing an overview, setup instructions, and project structure.
 
 ## Installation 🛠️
-1. Navigate to the project Root directory:
+- First Read this [License](https://github.com/UjjwalSaini07/RealTime-Trade-Stimulation/blob/main/LICENSE) & their terms then proceed.
+- Star ⭐ the [Repository](https://github.com/UjjwalSaini07/RealTime-Trade-Stimulation)
+- Fork the repository **(Optional)**
+- Project Setup:
+1. Clone the Project
+```bash
+git clone https://github.com/UjjwalSaini07/RealTime-Trade-Stimulation.git
+```
+2. Navigate to the project Root directory:
 ```bash
 cd okx_assignment
 ```
@@ -66,10 +74,7 @@ cd okx_assignment
 ```bash
 pip install -r requirements.txt
 ```
-3. Create a .env file in the root directory
-```bash
-API_URL=wss://ws.okx.com:8443/ws/v5/public
-```
+3. Create a .env file in the root directory and Setup [Contact](mailto:ujjwalsaini0007+envreq@gmail.com)
 
 # Usage 🖥️
 - Run the Streamlit app:
