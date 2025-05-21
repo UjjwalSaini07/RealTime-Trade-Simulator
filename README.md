@@ -100,19 +100,17 @@ python -m streamlit run main.py
     docker-compose up --build
 ```
 4. Wait for Generating the Image
-##### How Docker Image Builds Looks
+#### How Docker Image Builds Looks
 
   ![image](https://github.com/user-attachments/assets/313cbbc6-a55a-45a5-bcde-ecc218aa8080)
-<details>	
- <summary><b>Docker Image Starts the Server Locally</b></summary><br>
+
+#### Docker Image Starts the Server Locally
 
   ![image](https://github.com/user-attachments/assets/44e594fb-0200-47de-beff-0c627af5df5f)
-</details>
-<details>	
- <summary><b>Project Docker Container</b></summary><br>
+
+#### Project Docker Container WebSockets Data Fetching
 
   ![image](https://github.com/user-attachments/assets/79e7e298-1fe5-4509-ae7d-06e065e3c0e2)
-</details>
 
 5. Now Simply use the Project using Docker Container
 
