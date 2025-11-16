@@ -5,7 +5,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from collections import deque
 from datetime import datetime, timezone, timedelta
-from ws_client import OrderBookClient
+from websockets.ws_client import OrderBookClient
 import io
 import altair as alt
 
@@ -117,12 +117,41 @@ with st.sidebar:
     if "running" not in st.session_state:
         st.session_state.running = False
 
-    start_btn = st.button("▶ Start Live", help="Start the live websocket feed and begin real-time updates.")
-    stop_btn = st.button("■ Stop Live", help="Stop the live feed and preserve the most recent snapshot.")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        start_btn = st.button(
+            "▶ Start Live",
+            help="Start the live websocket feed and begin real-time updates.",
+            use_container_width=True  # FULL WIDTH
+        )
+
+    with col2:
+        stop_btn = st.button(
+            "■ Stop Live",
+            help="Stop the live feed and preserve the most recent snapshot.",
+            use_container_width=True,  # FULL WIDTH
+        )
+
+    st.markdown("""
+        <style>
+        div.stButton > button:first-child {
+            height: 45px;
+            font-weight: 600;
+        }
+        /* Stop button - second button in column (col2) */
+        div[data-testid="column"]:nth-of-type(2) button {
+            background-color: red !important;
+            color: white !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("---")
     st.header("Execution Simulation")
     simulate_order = st.checkbox("Show simulation panel", value=False, help="Toggle to show the simulation panel which uses current snapshot + volatility.")
     st.markdown("Simulation uses current orderbook snapshot and volatility to estimate fills.")
+    st.markdown("<div style='margin-top:10px; font-size:12px; color:gray; text-align:center;'>© 2025 All rights reserved.</div>", unsafe_allow_html=True)
 
 # -------------------------
 # Attach client & init state
