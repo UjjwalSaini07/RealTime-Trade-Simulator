@@ -1,5 +1,4 @@
 __pycache__
-__pycache__
 *.py[cod]
 *$py.class
 .env
@@ -8,4 +7,3 @@ dist
 .build
 .DS_Store
 *.log
-*.sqlite3
