@@ -4,7 +4,7 @@ import time
 import pandas as pd
 from dotenv import load_dotenv
 from collections import deque
-from datetime import datetime, timezone  
+from datetime import datetime, timezone, timedelta
 from ws_client import OrderBookClient
 import io
 import altair as alt
@@ -122,12 +122,27 @@ def init_state():
         st.session_state.export_data = []
     if "last_data" not in st.session_state:
         st.session_state.last_data = None
+    # track when the session (live) was started; keep None until user hits Start Live
+    if "start_time" not in st.session_state:
+        st.session_state.start_time = None
 
 init_state()
+
+# --- ensure UI enhancement toggles exist in session state (initialization fix) ---
+if "ui_enh_v1" not in st.session_state:
+    st.session_state.ui_enh_v1 = True
+if "ui_enh_v2" not in st.session_state:
+    st.session_state.ui_enh_v2 = False
+if "ui_enh_v3" not in st.session_state:
+    st.session_state.ui_enh_v3 = False
+# ------------------------------------------------------------------------------
 
 # handle start/stop toggle
 if start_btn:
     st.session_state.running = True
+    # record start time when the user begins a live session (do not overwrite if already set)
+    if st.session_state.start_time is None:
+        st.session_state.start_time = datetime.now(timezone.utc)
 if stop_btn:
     st.session_state.running = False
 
@@ -168,13 +183,123 @@ chart_placeholder = st.container()        # for charts
 table_placeholder = st.container()        # for raw orderbook / export
 sim_placeholder = st.container()          # for simulation text
 
+# ------------------------
+def _format_duration(delta: timedelta) -> str:
+    # format timedelta as H:MM:SS (hours can be > 24)
+    total_seconds = int(delta.total_seconds())
+    hours, rem = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
+    return f"{hours}:{minutes:02d}:{seconds:02d}"
+
+def render_session_info_row():
+    # single row with compact cards
+    c1, c2, c3, c4, c5 = st.columns([1,1,1,1,1])
+    conn_status = "Running" if st.session_state.running else "Stopped"
+    c1.metric("Connection", conn_status)
+    c2.metric("Subscribed", symbol)
+
+    # NEW: Session Duration — shows how long the live session has been running.
+    if st.session_state.start_time:
+        now = datetime.now(timezone.utc)
+        duration = now - st.session_state.start_time
+        duration_str = _format_duration(duration)
+    else:
+        duration_str = "0:00:00"
+    c3.metric("Session Duration", duration_str)
+
+    c4.metric("Refresh (s)", f"{refresh_rate:.1f}")
+    last_health = st.session_state.health_statuses[-1] if st.session_state.health_statuses else "N/A"
+    c5.metric("Health", last_health)
+
+def render_topbook_and_mini_trends(data):
+    # left: top-of-book + small orderbook tables; right: mini trends
+    left, right = st.columns([2,1.2])
+    with left:
+        st.subheader("Top-of-book")
+        # large metrics
+        cols_metrics = st.columns([1,1,1,1])
+        if data:
+            prev_mid = st.session_state.mid_prices[-2] if len(st.session_state.mid_prices) > 1 else None
+            mid_delta = (data["mid_price"] - prev_mid) if prev_mid is not None else 0.0
+            cols_metrics[0].metric("Best Bid", f"{data['best_bid']:.2f}")
+            cols_metrics[1].metric("Best Ask", f"{data['best_ask']:.2f}")
+            cols_metrics[2].metric("Spread", f"{data['spread']:.2f}")
+            cols_metrics[3].metric("Mid Price", f"{data['mid_price']:.2f}", delta=f"{mid_delta:.2f}")
+        else:
+            cols_metrics[0].metric("Best Bid", "N/A")
+            cols_metrics[1].metric("Best Ask", "N/A")
+            cols_metrics[2].metric("Spread", "N/A")
+            cols_metrics[3].metric("Mid Price", "N/A")
+
+        st.markdown("---")
+        # show top bids / asks side-by-side
+        bcol, acol = st.columns(2)
+        with bcol:
+            st.write("Top bids (best first)")
+            bids = data.get("bids", [])[:10] if data else []
+            if bids:
+                st.table(pd.DataFrame(bids, columns=["Price", "Qty"]))
+            else:
+                st.info("No bids yet.")
+        with acol:
+            st.write("Top asks (best first)")
+            asks = data.get("asks", [])[:10] if data else []
+            if asks:
+                st.table(pd.DataFrame(asks, columns=["Price", "Qty"]))
+            else:
+                st.info("No asks yet.")
+
+    with right:
+        st.subheader("Mini Trends")
+        mini_mid = pd.DataFrame({"Time": list(st.session_state.times), "Mid Price": list(st.session_state.mid_prices)}).set_index("Time")
+        mini_spread = pd.DataFrame({"Time": list(st.session_state.times), "Spread": list(st.session_state.spreads)}).set_index("Time")
+
+        st.caption("Mid Price")
+        if not mini_mid.empty:
+            chart_mid = make_line_chart(mini_mid.tail(60), "Mid Price")
+            if chart_mid:
+                st.altair_chart(chart_mid.properties(height=140), width='stretch')
+            else:
+                st.line_chart(mini_mid.tail(60))
+        else:
+            st.write("—")
+
+        st.caption("Spread")
+        if not mini_spread.empty:
+            chart_sp = make_line_chart(mini_spread.tail(60), "Spread")
+            if chart_sp:
+                st.altair_chart(chart_sp.properties(height=120), width='stretch')
+            else:
+                st.line_chart(mini_spread.tail(60))
+        else:
+            st.write("—")
+
+def render_help_expanders():
+    st.markdown("---")
+    st.subheader("Help & Field Descriptions")
+    with st.expander("What is Mid Price?"):
+        st.write("Mid Price = (best_bid + best_ask) / 2. Useful as a simple reference central price.")
+    with st.expander("What is Spread?"):
+        st.write("Spread = best_ask - best_bid. Narrow spreads typically indicate higher liquidity.")
+    with st.expander("Refresh Interval"):
+        st.write("Lower values update more often but increase CPU/network usage.")
+    with st.expander("Simulation parameters"):
+        st.write("- Volatility affects slippage estimates\n- Fee Tier affects cost calculations (not deeply implemented here)")
+
+# ------------------------
+# End of CHANGED layout-only section
+# ------------------------
 # If not running, show last snapshot and a friendly message
 if not st.session_state.running:
     with top_placeholder:
         st.info("Live feed is stopped — press ▶ Start Live to begin real-time updates.")
         if st.session_state.last_data is None:
             st.warning("No data yet. Start live to fetch the first snapshot.")
-    # still show historical charts if any
+
+    # Render session info row (changed; Last update removed and replaced with Session Duration)
+    render_session_info_row()
+
+    # still show historical charts if any — keep original behavior but place Top-of-book + mini trends in same row (changed)
     if st.session_state.times:
         with chart_placeholder:
             tab1, tab2 = st.tabs(["Charts", "Latency & Health"])
@@ -208,7 +333,11 @@ if not st.session_state.running:
                 df_latency = pd.DataFrame({"Time": list(st.session_state.times), "Latency (ms)": list(st.session_state.latencies)}).set_index("Time")
                 st.line_chart(df_latency)
                 st.write("Latest Health:", st.session_state.health_statuses[-1] if st.session_state.health_statuses else "N/A")
-    # show last raw snapshot + export if available
+
+    # CHANGED: place Top-of-book + Mini Trends together (uses last_data)
+    render_topbook_and_mini_trends(st.session_state.last_data if st.session_state.last_data else {})
+
+    # show last raw snapshot + export if available (unchanged)
     with table_placeholder:
         if st.session_state.last_data:
             st.subheader("Last Orderbook Snapshot")
@@ -247,12 +376,15 @@ if not st.session_state.running:
             else:
                 st.info("Simulation will activate once data is available.")
 
+    # CHANGED: Help expanders at the bottom
+    render_help_expanders()
+
     st.stop()  # stop further execution when not running
 
 try:
     data = client.get_latest_orderbook()
     latency = client.get_latency() * 1000  # ms
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)  # <-- timezone-aware datetime (fixed)
 
     if data:
         st.session_state.last_data = data
@@ -299,7 +431,14 @@ try:
             cols2[3].metric("Health", st.session_state.health_statuses[-1])
         st.progress(min(1.0, len(st.session_state.times)/max_history))
 
-    # Charts & tables
+    # CHANGED: Render session info row under top metrics (keeps slot locations same)
+    render_session_info_row()
+    st.markdown("---")
+
+    # Charts & tables: place Top-of-book + Mini Trends in same row (changed)
+    render_topbook_and_mini_trends(data or {})
+
+    # Original tabs for charts etc. remain unchanged (kept below to preserve previous behaviour)
     with chart_placeholder:
         tab1, tab2, tab3 = st.tabs(["Price & Spread", "Latency & Health", "Orderbook Snapshot"])
         with tab1:
@@ -386,10 +525,40 @@ try:
             else:
                 st.warning("No orderbook snapshot yet for simulation.")
 
+    # Quick Actions (unchanged features kept, same code)
+    if st.session_state.ui_enh_v3:
+        with st.container():
+            st.markdown("---")
+            st.markdown("### Quick Actions")
+            qa1, qa2, qa3 = st.columns(3)
+            if qa1.button("Clear History"):
+                st.session_state.times.clear()
+                st.session_state.mid_prices.clear()
+                st.session_state.spreads.clear()
+                st.session_state.latencies.clear()
+                st.session_state.health_statuses.clear()
+                st.success("History cleared (in-memory).")
+            if qa2.button("Export last 100"):
+                # prepare last 100 rows
+                df_export = pd.DataFrame(st.session_state.export_data[-100:])
+                csv_buffer = io.StringIO()
+                df_export.to_csv(csv_buffer, index=False)
+                st.download_button(
+                    label="Download last 100 rows",
+                    data=csv_buffer.getvalue(),
+                    file_name=f"okx_orderbook_last100_{symbol}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
+            if qa3.button("Copy Snapshot to Clipboard (browser)"):
+                if st.session_state.last_data:
+                    st.text_area("Snapshot (select & copy)", value=pd.Series(st.session_state.last_data).to_json(), height=120)
+                else:
+                    st.warning("No snapshot to copy yet.")
+
+    # CHANGED: Help expanders at bottom
+    render_help_expanders()
+
     # wait & rerun cycle
-    # time.sleep(refresh_rate)
-    # if st.session_state.running:
-    #     st.experimental_rerun()
     time.sleep(refresh_rate)
     if st.session_state.running:
         safe_rerun()
