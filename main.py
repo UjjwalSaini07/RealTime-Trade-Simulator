@@ -4,7 +4,7 @@ import time
 import pandas as pd
 from dotenv import load_dotenv
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone  
 from ws_client import OrderBookClient
 import io
 import altair as alt
@@ -92,6 +92,19 @@ client = get_client(URL)
 if getattr(client, "subscribe_inst", None) != symbol:
     client.subscribe_inst = symbol
 
+def safe_rerun():
+    if hasattr(st, "rerun"):
+        try:
+            st.rerun()
+            return
+        except Exception:
+            pass
+    if hasattr(st, "experimental_rerun"):
+        st.experimental_rerun()
+        return
+    # neither API present — raise a helpful error so debugging is easy
+    raise RuntimeError("Streamlit rerun API not found (tried st.rerun and st.experimental_rerun).")
+
 max_history = 120  # store last N samples
 
 def init_state():
@@ -178,7 +191,7 @@ if not st.session_state.running:
                     st.subheader("Mid Price")
                     st.caption("Mid Price = (best_bid + best_ask) / 2 — hover for exact values and timestamps.")
                     if mid_chart:
-                        st.altair_chart(mid_chart, use_container_width=True)
+                        st.altair_chart(mid_chart, width='stretch')
                     else:
                         st.line_chart(df_mid)
 
@@ -186,7 +199,7 @@ if not st.session_state.running:
                     st.subheader("Spread")
                     st.caption("Spread = best_ask - best_bid — narrow spreads generally indicate higher liquidity.")
                     if spread_chart:
-                        st.altair_chart(spread_chart, use_container_width=True)
+                        st.altair_chart(spread_chart, width='stretch')
                     else:
                         st.line_chart(df_spread)
 
@@ -208,7 +221,7 @@ if not st.session_state.running:
             st.download_button(
                 label="Download Orderbook Data as CSV",
                 data=csv_buffer.getvalue(),
-                file_name=f"okx_orderbook_{symbol}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv",
+                file_name=f"okx_orderbook_{symbol}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv",
                 mime="text/csv"
             )
     # show simulation panel if requested (uses last_data snapshot)
@@ -302,7 +315,7 @@ try:
                 st.subheader("Mid Price")
                 st.caption("Interactive mid-price chart. Displays the mid price ((best_bid + best_ask)/2) with hover tooltips for precise values.")
                 if mid_chart:
-                    st.altair_chart(mid_chart, use_container_width=True)
+                    st.altair_chart(mid_chart, width='stretch')
                 else:
                     st.line_chart(df_mid)
 
@@ -310,7 +323,7 @@ try:
                 st.subheader("Spread")
                 st.caption("Interactive spread chart. Lower spreads usually imply higher liquidity; hover for exact spread values.")
                 if spread_chart:
-                    st.altair_chart(spread_chart, use_container_width=True)
+                    st.altair_chart(spread_chart, width='stretch')
                 else:
                     st.line_chart(df_spread)
 
@@ -344,7 +357,7 @@ try:
             st.download_button(
                 label="Download Orderbook Data as CSV",
                 data=csv_buffer.getvalue(),
-                file_name=f"okx_orderbook_{symbol}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv",
+                file_name=f"okx_orderbook_{symbol}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv",
                 mime="text/csv"
             )
 
@@ -374,9 +387,12 @@ try:
                 st.warning("No orderbook snapshot yet for simulation.")
 
     # wait & rerun cycle
+    # time.sleep(refresh_rate)
+    # if st.session_state.running:
+    #     st.experimental_rerun()
     time.sleep(refresh_rate)
     if st.session_state.running:
-        st.experimental_rerun()
+        safe_rerun()
 
 except Exception as e:
     st.error(f"Error in live loop: {e}")
